@@ -14,11 +14,10 @@ mqtt.on('message', (topic, message) => console.log(topic, message.toString()))
 // Allow client to disconnect before terminating the client process
 let exitAttempts = 0
 process.on('SIGINT', () => {
-  exitAttempts++
-
   if (exitAttempts === 0) {
     mqtt.end(() => process.exit(0))
     console.error('Disconnecting from MQTT server')
+    exitAttempts++
   } else {
     console.error('Forcefully exiting...')
     process.exit(1)

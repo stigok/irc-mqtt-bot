@@ -59,11 +59,10 @@ irc.addListener(`message${homechan}`, (nick, text, message) => mqtt.publish(`${b
 // Allow client to disconnect before terminating the client process
 let exitAttempts = 0
 process.on('SIGINT', () => {
-  exitAttempts++
-
   if (exitAttempts === 0) {
     mqtt.end(() => console.log('Disconnected from MQTT server'))
     irc.disconnect('wow... actually exiting cleanly', () => console.log('Disonnected from IRC server'))
+    exitAttempts++
   } else {
     console.error('Forcefully exiting...')
     process.exit(1)
