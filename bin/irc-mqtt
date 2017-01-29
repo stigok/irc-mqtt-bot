@@ -61,7 +61,7 @@ let exitAttempts = 0
 process.on('SIGINT', () => {
   exitAttempts++
 
-  if (exitAttempts === 1) {
+  if (exitAttempts === 0) {
     mqtt.end(() => console.log('Disconnected from MQTT server'))
     irc.disconnect('wow... actually exiting cleanly', () => console.log('Disonnected from IRC server'))
   } else {

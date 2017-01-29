@@ -16,7 +16,7 @@ let exitAttempts = 0
 process.on('SIGINT', () => {
   exitAttempts++
 
-  if (exitAttempts === 1) {
+  if (exitAttempts === 0) {
     mqtt.end(() => process.exit(0))
     console.error('Disconnecting from MQTT server')
   } else {
