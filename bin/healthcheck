@@ -1,0 +1,23 @@
+#!/usr/bin/env node
+
+const MQTT = require('mqtt')
+const mqtt = MQTT.connect(process.env.MQTT_CNNSTRING)
+const ping = `${process.env.BOTNAME}/bot/ping`
+const pong = `${process.env.BOTNAME}/irc/pong`
+const timeout = 10 * 1000
+
+mqtt.on('connect', () => {
+  // Send a PING and wait for a PONG
+  mqtt.subscribe(pong)
+  mqtt.publish(ping, 'Please send me a PONG if you are listening, IRC')
+})
+mqtt.on('message', (topic, message) => {
+  // On PONG, exit with 0 to indicate good health
+  console.log('Received PONG')
+  mqtt.end(() => process.exit(0))
+})
+
+// If the wait is too long, health is bad; exit with code 1
+setTimeout(() => {
+  mqtt.end(() => process.exit(1))
+}, timeout)

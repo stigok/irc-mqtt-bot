@@ -1,0 +1,35 @@
+#!/usr/bin/env node
+
+const MQTT = require('mqtt')
+const prompt = require('prompt')
+const mqtt = MQTT.connect(process.env.MQTT_CNNSTRING)
+const botname = process.env.BOTNAME
+
+mqtt.on('connect', function () {
+  console.log('connected to mqtt server. publish something!')
+  prompt.start()
+  prompt.get({
+    properties: {
+      topic: {
+        pattern: /^[a-zA-Z\-/]+$/,
+        message: 'Invalid input. Check regex.',
+        required: true,
+        default: 'irc/ping'
+      },
+      message: {
+        pattern: /^[-+a-zA-Z\s/]+$/,
+        message: 'Invalid input. Check regex.',
+        required: true,
+        default: 'ping'
+      }
+    }
+  }, function (err, result) {
+    if (err) {
+      console.error(err)
+      return
+    }
+    mqtt.publish(`${botname}/${result.topic}`, result.message)
+    console.log(`${botname}/${result.topic} -> ${result.message}`)
+    mqtt.end(() => process.exit(0))
+  })
+})

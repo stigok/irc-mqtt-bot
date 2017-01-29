@@ -1,0 +1,71 @@
+#!/usr/bin/env node
+
+const MQTT = require('mqtt')
+const IRC = require('irc')
+
+const homechan = process.env.HOMECHAN
+const botname = process.env.BOTNAME
+const mqttserver = process.env.MQTT_CNNSTRING
+const ircserver = process.env.IRC_SERVER
+
+const mqtt = MQTT.connect(mqttserver)
+
+const irc = new IRC.Client(ircserver, botname, {
+  'port': 6697,
+  'realName': `${botname} is a nodebot`,
+  'autoConnect': false,
+  'channels': [homechan],
+  'secure': true,
+  'floodProtection': true,
+  'floodProtectionDelay': 500
+})
+
+mqtt.on('connect', function () {
+  mqtt.subscribe(`${botname}/#`)
+  console.log('connected to mqtt server')
+  irc.connect()
+})
+
+mqtt.on('message', function (topic, message) {
+  message = message.toString()
+  console.log(`${topic} -> ${message}`)
+  switch (topic) {
+    case `${botname}/bot/say`:
+      irc.say(homechan, message)
+      break
+    case `${botname}/bot/setmode`:
+      const args = message.split(' ').filter(m => m.length)
+      if (args.every(arg => arg.match(/^[+-_a-zA-Z]+$/g))) {
+        irc.send('MODE', homechan, ...args)
+      }
+      break
+    case `${botname}/bot/ping`:
+      irc.say(botname, 'PING')
+      break
+    case `${botname}/irc/pm/${botname}`:
+      mqtt.publish(`${botname}/irc/pong`, 'PONG')
+      break
+    default:
+      // do nothing
+      break
+  }
+})
+
+irc.addListener('registered', message => mqtt.publish(`${botname}/irc/status`, message.toString()))
+irc.addListener('error', err => console.error(err))
+irc.addListener('pm', (nick, message) => mqtt.publish(`${botname}/irc/pm/${nick}`, message))
+irc.addListener(`message${homechan}`, (nick, text, message) => mqtt.publish(`${botname}/irc/message/${nick}`, text || message))
+
+// Allow client to disconnect before terminating the client process
+let exitAttempts = 0
+process.on('SIGINT', () => {
+  exitAttempts++
+
+  if (exitAttempts === 1) {
+    mqtt.end(() => console.log('Disconnected from MQTT server'))
+    irc.disconnect('wow... actually exiting cleanly', () => console.log('Disonnected from IRC server'))
+  } else {
+    console.error('Forcefully exiting...')
+    process.exit(1)
+  }
+})

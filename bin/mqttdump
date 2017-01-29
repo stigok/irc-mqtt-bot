@@ -1,0 +1,26 @@
+#!/usr/bin/env node
+
+const MQTT = require('mqtt')
+const mqtt = MQTT.connect(process.env.MQTT_CNNSTRING)
+
+mqtt.on('connect', function () {
+  console.log('connected to mqtt server')
+  mqtt.subscribe(`${process.env.BOTNAME}/#`)
+  console.log(`subscribed to ${process.env.BOTNAME}/#`)
+})
+
+mqtt.on('message', (topic, message) => console.log(topic, message.toString()))
+
+// Allow client to disconnect before terminating the client process
+let exitAttempts = 0
+process.on('SIGINT', () => {
+  exitAttempts++
+
+  if (exitAttempts === 1) {
+    mqtt.end(() => process.exit(0))
+    console.error('Disconnecting from MQTT server')
+  } else {
+    console.error('Forcefully exiting...')
+    process.exit(1)
+  }
+})

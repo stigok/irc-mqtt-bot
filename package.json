@@ -1,0 +1,14 @@
+{
+  "scripts": {
+    "start": "node bin/irc-mqtt",
+    "test": "node bin/healthcheck"
+  },
+  "dependencies": {
+    "irc": "^0.5.2",
+    "mqtt": "^2.3.0",
+    "prompt": "^1.0.0"
+  },
+  "devDependencies": {
+    "standard": "^8.6.0"
+  }
+}

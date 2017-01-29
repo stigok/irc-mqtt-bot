@@ -1,0 +1,13 @@
+version: '2'
+
+services:
+  irc-server:
+    image: sshow/irc-mqtt:latest
+    build: .
+    restart: 'always'
+    environment:
+      IRC_SERVER: ""
+      BOTNAME: ""
+      HOMECHAN: ""
+      MQTT_CNNSTRING: "mqtt://user:pass@localhost:15014"
+    stop_signal: SIGINT
