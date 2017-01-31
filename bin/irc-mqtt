@@ -8,8 +8,6 @@ const botname = process.env.BOTNAME
 const mqttserver = process.env.MQTT_CNNSTRING
 const ircserver = process.env.IRC_SERVER
 
-const mqtt = MQTT.connect(mqttserver)
-
 const irc = new IRC.Client(ircserver, botname, {
   'port': 6697,
   'realName': `${botname} is a nodebot`,
@@ -19,6 +17,8 @@ const irc = new IRC.Client(ircserver, botname, {
   'floodProtection': true,
   'floodProtectionDelay': 500
 })
+
+const mqtt = MQTT.connect(mqttserver)
 
 mqtt.on('connect', function () {
   mqtt.subscribe(`${botname}/#`)
