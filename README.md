@@ -43,3 +43,7 @@ The healthcheck for the Docker container is performed by making the bot send a
 private message to itself, all of which it answers with a `PONG`. This verifies
 the connection to IRC is still up. However, it is not checking the status of the
 MQTT connection as the usual problem is that the IRC connection goes down.
+
+## TODO
+
+- Export list of topics as object to reduce accidental typos
