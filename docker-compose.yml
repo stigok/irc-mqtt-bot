@@ -6,8 +6,9 @@ services:
     build: .
     restart: 'always'
     environment:
-      IRC_SERVER: ""
-      BOTNAME: ""
-      HOMECHAN: ""
-      MQTT_CNNSTRING: "mqtt://user:pass@localhost:15014"
+      IRC_SERVER: "chat.freenode.net"
+      BOTNAME: "sshowbot"
+      HOMECHAN: "#oslohackerspace"
+      MQTT_CNNSTRING: "mqtts://user:password@localhost:1337"
+      ROOT_TOPIC: "sshow/sshowbot"
     stop_signal: SIGINT
