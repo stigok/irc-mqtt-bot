@@ -78,13 +78,26 @@ irc.addListener(`message`, (nick, to, text, message) => {
 
 // Allow client to disconnect before terminating the client process
 let exitAttempts = 0
-process.on('SIGINT', () => {
+function cleanExit () {
   if (exitAttempts === 0) {
-    mqtt.end(() => console.log('Disconnected from MQTT server'))
     irc.disconnect('wow... actually exiting cleanly', () => console.log('Disonnected from IRC server'))
+    mqtt.end(() => console.log('Disconnected from MQTT server'))
     exitAttempts++
   } else {
     console.error('Forcefully exiting...')
     process.exit(1)
   }
+}
+
+process.on('SIGINT', () => {
+  console.log('SIGINT trapped')
+  cleanExit()
+})
+process.on('SIGHUP', () => {
+  console.log('SIGHUP trapped')
+  cleanExit()
+})
+process.on('SIGTERM', () => {
+  console.log('SIGTERM trapped')
+  cleanExit()
 })
