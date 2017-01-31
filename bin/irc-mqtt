@@ -23,7 +23,6 @@ const irc = new IRC.Client(ircserver, botname, {
 mqtt.on('connect', function () {
   mqtt.subscribe(`${botname}/#`)
   console.log('connected to mqtt server')
-  irc.connect()
 })
 
 mqtt.on('message', function (topic, message) {
@@ -51,7 +50,11 @@ mqtt.on('message', function (topic, message) {
   }
 })
 
-irc.addListener('registered', message => mqtt.publish(`${botname}/irc/status`, message.toString()))
+irc.connect()
+irc.addListener('registered', message => {
+  console.log('Connected to IRC')
+  mqtt.publish(`${botname}/irc/status`, JSON.stringify(message))
+})
 irc.addListener('error', err => console.error(err))
 irc.addListener('pm', (nick, message) => mqtt.publish(`${botname}/irc/pm/${nick}`, message))
 irc.addListener(`message${homechan}`, (nick, text, message) => mqtt.publish(`${botname}/irc/message/${nick}`, text || message))
