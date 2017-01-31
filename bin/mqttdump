@@ -4,16 +4,16 @@ const MQTT = require('mqtt')
 const mqtt = MQTT.connect(process.env.MQTT_CNNSTRING)
 
 mqtt.on('connect', function () {
-  console.log('connected to mqtt server')
-  mqtt.subscribe(`${process.env.BOTNAME}/#`)
-  console.log(`subscribed to ${process.env.BOTNAME}/#`)
+  console.log('Connected to mqtt server')
+  mqtt.subscribe(`${process.env.ROOT_TOPIC}/#`)
+  console.log(`Subscribed to ${process.env.ROOT_TOPIC}/#`)
 })
 
 mqtt.on('message', (topic, message) => console.log(topic, message.toString()))
 
 // Allow client to disconnect before terminating the client process
 let exitAttempts = 0
-process.on('SIGINT', () => {
+function cleanExit () {
   if (exitAttempts === 0) {
     mqtt.end(() => process.exit(0))
     console.error('Disconnecting from MQTT server')
@@ -22,4 +22,17 @@ process.on('SIGINT', () => {
     console.error('Forcefully exiting...')
     process.exit(1)
   }
+}
+
+process.on('SIGINT', () => {
+  console.log('SIGINT trapped')
+  cleanExit()
+})
+process.on('SIGHUP', () => {
+  console.log('SIGHUP trapped')
+  cleanExit()
+})
+process.on('SIGTERM', () => {
+  console.log('SIGTERM trapped')
+  cleanExit()
 })
