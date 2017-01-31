@@ -11,6 +11,7 @@ const topic = process.env.ROOT_TOPIC
 
 const irc = new IRC.Client(ircserver, botname, {
   'port': 6697,
+  'userName': 'sshowbot',
   'realName': `${botname} is a nodebot`,
   'autoConnect': false,
   'channels': [homechan],
