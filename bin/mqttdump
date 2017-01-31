@@ -4,7 +4,7 @@ const MQTT = require('mqtt')
 const mqtt = MQTT.connect(process.env.MQTT_CNNSTRING)
 
 mqtt.on('connect', function () {
-  console.log('Connected to mqtt server')
+  console.log('Connected to MQTT server')
   mqtt.subscribe(`${process.env.ROOT_TOPIC}/#`)
   console.log(`Subscribed to ${process.env.ROOT_TOPIC}/#`)
 })

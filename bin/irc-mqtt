@@ -24,7 +24,7 @@ const mqtt = MQTT.connect(mqttserver)
 
 mqtt.on('connect', function () {
   mqtt.subscribe(`${botname}/#`)
-  console.log('connected to mqtt server')
+  console.log('Connected to MQTT server')
 })
 
 mqtt.on('message', function (topic, message) {

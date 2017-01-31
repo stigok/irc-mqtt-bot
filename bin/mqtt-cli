@@ -6,7 +6,7 @@ const mqtt = MQTT.connect(process.env.MQTT_CNNSTRING)
 const rootTopic = process.env.ROOT_TOPIC
 
 mqtt.on('connect', function () {
-  console.log(`Connected to mqtt server`)
+  console.log(`Connected to MQTT server`)
   console.log(`Publish a message under topic ${rootTopic}`)
   prompt.start()
   prompt.get({
