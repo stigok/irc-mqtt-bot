@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const MQTT = require('mqtt')
-const IRC = require('irc')
+const IRC = require('irc-upd')
 
 const homechan = process.env.HOMECHAN
 const botname = process.env.BOTNAME
