@@ -2,102 +2,139 @@
 
 const MQTT = require('mqtt')
 const IRC = require('irc-upd')
+const logger = require('winston')
 
-const homechan = process.env.HOMECHAN
-const botname = process.env.BOTNAME
-const mqttserver = process.env.MQTT_CNNSTRING
-const ircserver = process.env.IRC_SERVER
-const topic = process.env.ROOT_TOPIC
+const homechan = process.env.HOMECHAN || '#hackeriet'
+const botName = process.env.BOTNAME || 'sshowbot'
+const mqttServerUrl = process.env.MQTT_CNNSTRING || 'mqtt://stig:test@localhost'
+const ircserver = process.env.IRC_SERVER || 'chat.freenode.net'
+const rootTopic = process.env.ROOT_TOPIC || `irc/${botName}`
+const botOwner = process.env.OWNER || 'sshowfosho'
+logger.level = process.env.LOG_LEVEL || 'debug'
 
-const irc = new IRC.Client(ircserver, botname, {
-  'port': 6697,
-  'userName': 'sshowbot',
-  'realName': `${botname} is a nodebot`,
-  'autoConnect': false,
-  'channels': [homechan],
-  'secure': true,
-  'floodProtection': true,
-  'floodProtectionDelay': 500
+const irc = new IRC.Client(ircserver, botName, {
+  port: 6697,
+  userName: botName,
+  realName: `${botName} is a nodebot`,
+  // Wait for MQTT connection
+  autoConnect: false,
+  channels: [homechan],
+  secure: true,
+  floodProtection: true,
+  floodProtectionDelay: 500
 })
 
-const mqtt = MQTT.connect(mqttserver)
+// Initiate MQTT connection
+const mqtt = MQTT.connect(mqttServerUrl)
 
-mqtt.on('connect', function () {
-  mqtt.subscribe(`${botname}/#`)
-  console.log('Connected to MQTT server')
+mqtt.on('connect', function (connack) {
+  mqtt.subscribe(`${rootTopic}/#`)
+  logger.debug('MQTT opened connection')
+})
+
+mqtt.on('close', function (connack) {
+  logger.debug('MQTT closed connection')
 })
 
 mqtt.on('message', function (topic, message) {
   message = message.toString()
-  console.log(`${topic} -> ${message}`)
-  switch (topic) {
-    case `${topic}/command/say`:
-      irc.say(homechan, message)
-      break
-    case `${topic}/command/pm`:
-      const parts = message.split(' ', 1)
-      const nick = parts[0]
-      const msg = parts[1]
-      if (nick && msg) {
-        irc.say(nick, msg)
-      }
-      break
-    case `${topic}/command/setmode`:
+  logger.info('MQTT message received', {topic, message})
+
+  // Execute commands from owner
+  if (topic.startsWith(`${rootTopic}/message/${botOwner}/`)) {
+    logger.verbose('MQTT event from bot owner', {message})
+    if (message.startsWith('!')) {
+      const args = message.replace(/^!/, '').split(' ')
+      const command = args.shift()
+      mqtt.publish(`${rootTopic}/command/${command}`, args.join(' '))
+      return
+    }
+  }
+
+  // Handle commands
+  const command = topic.substr(topic.lastIndexOf('/') + 1)
+  logger.silly('*** Parsed command', command)
+  switch (command) {
+    case 'mode':
       const args = message.split(' ').filter(m => m.length)
       if (args.every(arg => arg.match(/^[+-_a-zA-Z]+$/g))) {
         irc.send('MODE', homechan, ...args)
       }
       break
-    case `${topic}/health/test`:
-      // Sends a private message to itself to check connection
-      irc.say(botname, 'Bot health check ' + Date.now())
-      break
-    case `${topic}/irc/message/${botname}/${botname}`:
-      // Answers private messages from itself with a pong
-      mqtt.publish(`${botname}/health/heartbeat`, 'PONG ' + Date.now())
+    case 'say':
+      irc.say(homechan, message)
       break
     default:
-      // do nothing
+      logger.debug('Message unhandled')
       break
   }
 })
 
 irc.connect()
-irc.addListener('registered', message => {
-  console.log('Connected to IRC')
-  mqtt.publish(`${topic}/irc/presence`, JSON.stringify(message))
+
+irc.on('registered', (message) => {
+  logger.info('IRC connected', {event: 'registered', message})
 })
-irc.addListener('error', err => {
-  mqtt.publish(`${topic}/irc/error`, err.toString())
-  console.error(err)
+
+irc.on('error', (err) => {
+  mqtt.publish(`${rootTopic}/error`, err.toString())
+  logger.error('IRC error occured', err)
 })
-// irc.addListener('pm', (nick, message) => mqtt.publish(`${topic}/irc/message/${}${nick}`, message))
-irc.addListener(`message`, (nick, to, text, message) => {
-  mqtt.publish(`${topic}/irc/message/${to}/${nick}`, text)
+
+irc.on('message', (from, to, message) => {
+  // Remove # from topic string to comply with MQTT topic rules
+  const topic = `${rootTopic}/message/${from}/${to}`.replace('#', '=')
+  mqtt.publish(topic, message)
+  logger.debug('IRC message received', {from, to, message})
+})
+
+irc.on('unhandled', (message) => {
+  logger.debug('IRC unhandled event', {message})
+})
+
+irc.on('netError', (exception) => {
+  logger.debug('IRC net error', {exception})
+})
+
+irc.conn.on('close', (hadError) => {
+  if (hadError) {
+    logger.error('IRC connection closed due to a socket transmission error', {hadError})
+  } else {
+    logger.info('IRC connection closed', {hadError})
+  }
 })
 
 // Allow client to disconnect before terminating the client process
 let exitAttempts = 0
 function cleanExit () {
   if (exitAttempts === 0) {
-    irc.disconnect('wow... actually exiting cleanly', () => console.log('Disonnected from IRC server'))
-    mqtt.end(() => console.log('Disconnected from MQTT server'))
+    irc.disconnect('wow... actually exiting cleanly', () => {
+      logger.info('IRC disconnected (signaled)')
+      mqtt.end(() => {
+        logger.info('MQTT disconnected (signaled)')
+        process.exit(0)
+      })
+    })
     exitAttempts++
   } else {
-    console.error('Forcefully exiting...')
+    logger.warning('Forcefully exiting')
     process.exit(1)
   }
 }
 
+process.on('SIGKIL', () => {
+  logger.debug('SIGKIL trapped')
+  cleanExit()
+})
 process.on('SIGINT', () => {
-  console.log('SIGINT trapped')
+  logger.debug('SIGINT trapped')
   cleanExit()
 })
 process.on('SIGHUP', () => {
-  console.log('SIGHUP trapped')
+  logger.debug('SIGHUP trapped')
   cleanExit()
 })
 process.on('SIGTERM', () => {
-  console.log('SIGTERM trapped')
+  logger.debug('SIGTERM trapped')
   cleanExit()
 })

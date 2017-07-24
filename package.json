@@ -6,7 +6,8 @@
   "dependencies": {
     "irc-upd": "^0.6.1",
     "mqtt": "^2.9.1",
-    "prompt": "^1.0.0"
+    "prompt": "^1.0.0",
+    "winston": "^2.3.1"
   },
   "devDependencies": {
     "standard": "^10.0.2"
