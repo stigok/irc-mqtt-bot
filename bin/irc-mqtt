@@ -117,7 +117,7 @@ function cleanExit () {
     })
     exitAttempts++
   } else {
-    logger.warning('Forcefully exiting')
+    logger.warn('Forcefully exiting')
     process.exit(1)
   }
 }
