@@ -4,13 +4,13 @@ const MQTT = require('mqtt')
 const IRC = require('irc-upd')
 const logger = require('winston')
 
-const homechan = process.env.HOMECHAN || '#hackeriet'
-const botName = process.env.BOTNAME || 'sshowbot'
-const mqttServerUrl = process.env.MQTT_CNNSTRING || 'mqtt://stig:test@localhost'
 const ircserver = process.env.IRC_SERVER || 'chat.freenode.net'
+const botName = process.env.BOTNAME || 'sshowbot'
+const homechan = process.env.HOMECHAN || '#hackeriet'
+const mqttServerUrl = process.env.MQTT_CNNSTRING || 'mqtt://alarm:alarm@localhost'
 const rootTopic = process.env.ROOT_TOPIC || `irc/${botName}`
 const botOwner = process.env.OWNER || 'sshowfosho'
-logger.level = process.env.LOG_LEVEL || 'debug'
+logger.level = process.env.LOG_LEVEL || 'info'
 
 const irc = new IRC.Client(ircserver, botName, {
   port: 6697,

@@ -1,14 +1,21 @@
-version: '2'
+version: '3.3'
 
 services:
-  irc-server:
-    image: sshow/irc-mqtt:latest
+  irc-mqtt:
+    image: stigok/irc-mqtt-bot
     build: .
-    restart: 'always'
+    restart: always
     environment:
       IRC_SERVER: "chat.freenode.net"
       BOTNAME: "sshowbot"
-      HOMECHAN: "#oslohackerspace"
-      MQTT_CNNSTRING: "mqtts://user:password@localhost:1337"
-      ROOT_TOPIC: "sshow/sshowbot"
+      HOMECHAN: "#hackeriet"
+      MQTT_CNNSTRING: "mqtt://alarm:alarm@mqtt-server"
+      ROOT_TOPIC: "irc/sshowbot"
+      LOG_LEVEL: "silly"
     stop_signal: SIGINT
+  mqtt-server:
+    image: eclipse-mosquitto:1.4.10
+    restart: always
+    command: mosquitto -v
+    expose:
+      - "1883"
