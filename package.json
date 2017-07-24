@@ -1,12 +1,12 @@
 {
+  "private": true,
+  "license": "MIT",
   "scripts": {
-    "start": "node bin/irc-mqtt",
-    "test": "node bin/healthcheck"
+    "start": "node bin/irc-mqtt"
   },
   "dependencies": {
-    "irc-upd": "^0.6.1",
-    "mqtt": "^2.9.1",
-    "prompt": "^1.0.0",
+    "irc-upd": "^0.6.2",
+    "mqtt": "^2.9.2",
     "winston": "^2.3.1"
   },
   "devDependencies": {
