@@ -1,6 +1,7 @@
-> Experimental
-
 ## About
+
+> This is working properly, but is still under development. API might change
+> in every direction.
 
 - Publishes all messages seen to `${rootTopic}/message/${from}/${to}`
 - Owner sends bot commands by prefixing message with !
@@ -8,15 +9,16 @@
   - `/msg sshowbot !say Hello, world!`
   - `!mode +o sshow`
 - Bot acts on commands to `${rootTopic}/command/${command}`
-- Recipients starting with `=` are channels
+- Recipients starting with `=` are channels (because # has special meaning in MQTT)
 
 ## Configuration
 
-Mostly configured with environment variables.
+Configure with environment variables. The below values are the defaults.
 
     IRC_SERVER: "chat.freenode.net"
     BOTNAME: "sshowbot"
     HOMECHAN: "#hackeriet"
+    OWNER: "sshow"
     MQTT_CNNSTRING: "mqtt://alarm:alarm@mqtt-server"
     ROOT_TOPIC: "irc/sshowbot"
     LOG_LEVEL: "silly"
